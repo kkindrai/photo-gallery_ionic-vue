@@ -31,24 +31,26 @@
 </template>
 
 <script setup lang="ts">
-import { camera, trash, close } from 'ionicons/icons';
-import { usePhotoGallery, UserPhoto } from '@/composables/usePhotoGallery';
-import { 
-  IonPage,
-  IonHeader,
-  IonFab,
-  IonFabButton,
-  IonIcon,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonImg,
-} from '@ionic/vue';
+  import { watch } from 'vue';
+  import { camera, trash, close } from 'ionicons/icons';
+  import { usePhotoGallery, UserPhoto } from '@/composables/usePhotoGallery';
+  import { 
+    IonPage,
+    IonHeader,
+    IonFab,
+    IonFabButton,
+    IonIcon,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonImg,
+  } from '@ionic/vue';
 
-// Destructure the takePhoto function from the composable
-const { photos, takePhoto } = usePhotoGallery();
-
+  // Destructure the takePhoto function from the composable
+  const { photos, takePhoto, cachePhotos } = usePhotoGallery();
+  // Watching for changes in the photo array to cache them
+  watch(photos, cachePhotos);
 </script>

@@ -3,11 +3,6 @@ import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 
-/**
- * Instance Variables
- * * photos: A reactive reference to store user photos.
- */
-const photos = ref<UserPhoto[]>([]);
 
 /**
  * Function to handle photo gallery operations.
@@ -15,22 +10,86 @@ const photos = ref<UserPhoto[]>([]);
  * @returns takePhoto function that captures a photo using the device camera.
  */
 export const usePhotoGallery = () => {
-  const takePhoto = async () => {
-    const photo = await Camera.getPhoto({
-      resultType: CameraResultType.Uri,
-      source: CameraSource.Camera,
-      quality: 100,
-    });
 
-    const fileName = Date.now() + '.jpeg';
-    const savedFileImage = await savePicture(photo, fileName);
+    // Local Instance Variables
+    const PHOTO_STORAGE = 'photos';
+    const photos = ref<UserPhoto[]>([]);
 
-    photos.value = [savedFileImage, ...photos.value];
-  };
+
+    // takePhoto Function
+    const takePhoto = async () => {
+        const photo = await Camera.getPhoto({
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera,
+        quality: 100,
+        });
+
+        const fileName = Date.now() + '.jpeg';
+        const savedFileImage = await savePicture(photo, fileName);
+
+        photos.value = [savedFileImage, ...photos.value];
+    };
+
+    // cachePhotos Function
+    const cachePhotos = () => {
+        Preferences.set({
+            key: PHOTO_STORAGE,
+            value: JSON.stringify(photos.value),
+        });
+    };
+
+    /**
+     * savePicture Function
+     * * Fetches the photo, reads it as a blob, converts it to base64
+     * 
+     * * Returns the filename and webpath
+     */
+    const savePicture = async (photo: Photo, fileName: string): Promise<UserPhoto> => {
+        // Fetch the photo, read as a blob, then convert to base64 format
+        const response = await fetch(photo.webPath!);
+        const blob = await response.blob();
+        const base64Data = (await convertBlobToBase64(blob)) as string;
+
+        const savedFile = await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Data,
+        });
+
+        // Use webPath to display the new image instead of base64 since it's
+        // already loaded into memory
+        return {
+            filepath: fileName,
+            webviewPath: photo.webPath,
+        };
+    };
+
+    /**
+     * loadSaved Function
+     * * Loads saved photos from Preferences and converts them to UserPhoto objects.
+     */
+    const loadSaved = async () => {
+        const photoList = await Preferences.get({ key: PHOTO_STORAGE });
+        const photosInPreferences = photoList.value ? JSON.parse(photoList.value) : [];
+
+        for (const photo of photosInPreferences) {
+            const file = await Filesystem.readFile({
+            path: photo.filepath,
+            directory: Directory.Data,
+            });
+            photo.webviewPath = `data:image/jpeg;base64,${file.data}`;
+        }
+
+        photos.value = photosInPreferences;
+    };
+
+    // Running onMounted to load saved photos
+    onMounted(loadSaved);
 
   return {
     photos,
     takePhoto,
+    cachePhotos,
   };
 };
 
@@ -57,28 +116,4 @@ const convertBlobToBase64 = (blob: Blob) =>
     reader.readAsDataURL(blob);
   });
 
-  /**
-   * savePicture Function
-   * * Fetches the photo, reads it as a blob, converts it to base64
-   * 
-   * * Returns the filename and webpath
-   */
-  const savePicture = async (photo: Photo, fileName: string): Promise<UserPhoto> => {
-    // Fetch the photo, read as a blob, then convert to base64 format
-    const response = await fetch(photo.webPath!);
-    const blob = await response.blob();
-    const base64Data = (await convertBlobToBase64(blob)) as string;
-
-    const savedFile = await Filesystem.writeFile({
-        path: fileName,
-        data: base64Data,
-        directory: Directory.Data,
-    });
-
-    // Use webPath to display the new image instead of base64 since it's
-    // already loaded into memory
-    return {
-        filepath: fileName,
-        webviewPath: photo.webPath,
-    };
-};
+  
