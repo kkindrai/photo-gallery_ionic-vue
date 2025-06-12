@@ -91,12 +91,16 @@ export const usePhotoGallery = () => {
         const photoList = await Preferences.get({ key: PHOTO_STORAGE });
         const photosInPreferences = photoList.value ? JSON.parse(photoList.value) : [];
 
-        for (const photo of photosInPreferences) {
+        // If running on the web...
+        if (!isPlatform('hybrid')) {
+            for (const photo of photosInPreferences) {
             const file = await Filesystem.readFile({
-            path: photo.filepath,
-            directory: Directory.Data,
+                path: photo.filepath,
+                directory: Directory.Data,
             });
+            // Web platform only: Load the photo as base64 data
             photo.webviewPath = `data:image/jpeg;base64,${file.data}`;
+            }
         }
 
         photos.value = photosInPreferences;
