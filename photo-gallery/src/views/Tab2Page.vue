@@ -31,7 +31,6 @@
 </template>
 
 <script setup lang="ts">
-  import { watch } from 'vue';
   import { camera, trash, close } from 'ionicons/icons';
   import { usePhotoGallery, UserPhoto } from '@/composables/usePhotoGallery';
   import { 
@@ -50,7 +49,5 @@
   } from '@ionic/vue';
 
   // Destructure the takePhoto function from the composable
-  const { photos, takePhoto, cachePhotos } = usePhotoGallery();
-  // Watching for changes in the photo array to cache them
-  watch(photos, cachePhotos);
+  const { photos, takePhoto } = usePhotoGallery();
 </script>

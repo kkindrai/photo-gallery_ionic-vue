@@ -83,13 +83,14 @@ export const usePhotoGallery = () => {
         photos.value = photosInPreferences;
     };
 
+    // Watching for changes in photos array to cache them
+    watch(photos, cachePhotos);
     // Running onMounted to load saved photos
     onMounted(loadSaved);
 
   return {
     photos,
     takePhoto,
-    cachePhotos,
   };
 };
 
