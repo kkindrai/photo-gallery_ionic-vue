@@ -40,6 +40,20 @@ export const usePhotoGallery = () => {
         });
     };
 
+    // Delete Photo Function
+    const deletePhoto = async (photo: UserPhoto) => {
+        // Remove this photo from the Photos reference data array
+        photos.value = photos.value.filter((p) => p.filepath !== photo.filepath);
+
+        // delete photo file from filesystem
+        const filename = photo.filepath.substr(photo.filepath.lastIndexOf('/') + 1);
+        await Filesystem.deleteFile({
+            path: filename,
+            directory: Directory.Data,
+        });
+    };
+    
+
     /**
      * savePicture Function
      * * Fetches the photo, reads it as a blob, converts it to base64
@@ -114,6 +128,7 @@ export const usePhotoGallery = () => {
   return {
     photos,
     takePhoto,
+    deletePhoto,
   };
 };
 
